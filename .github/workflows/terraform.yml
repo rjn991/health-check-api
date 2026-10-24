@@ -1,4 +1,3 @@
-
 name: Terraform CI
 
 on:
@@ -35,6 +34,30 @@ jobs:
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+
+      - name: Create Terraform variables
+        shell: bash
+        env:
+          TF_LOCATION: ${{ vars.TF_LOCATION }}
+          TF_RESOURCE_GROUP_NAME: ${{ vars.TF_RESOURCE_GROUP_NAME }}
+          TF_VM_NAME: ${{ vars.TF_VM_NAME }}
+          TF_VM_SIZE: ${{ vars.TF_VM_SIZE }}
+          TF_ADMIN_USERNAME: ${{ vars.TF_ADMIN_USERNAME }}
+          TF_SSH_ALLOWED_CIDR: ${{ vars.TF_SSH_ALLOWED_CIDR }}
+          SSH_PUBLIC_KEY: ${{ vars.AZURE_SSH_PUBLIC_KEY }}
+        run: |
+          printf '%s\n' "$SSH_PUBLIC_KEY" > "$RUNNER_TEMP/azure-vm.pub"
+
+          cat > terraform.tfvars <<EOF
+          subscription_id     = "${ARM_SUBSCRIPTION_ID}"
+          location            = "${TF_LOCATION}"
+          resource_group_name = "${TF_RESOURCE_GROUP_NAME}"
+          vm_name             = "${TF_VM_NAME}"
+          vm_size             = "${TF_VM_SIZE}"
+          admin_username      = "${TF_ADMIN_USERNAME}"
+          ssh_public_key_path = "$RUNNER_TEMP/azure-vm.pub"
+          ssh_allowed_cidr    = "${TF_SSH_ALLOWED_CIDR}"
+          EOF
 
       - name: Check formatting
         run: terraform fmt -check -recursive
