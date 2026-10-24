@@ -58,25 +58,28 @@ jobs:
           location            = "${TF_LOCATION}"
           resource_group_name = "${TF_RESOURCE_GROUP_NAME}"
           vm_name             = "${TF_VM_NAME}"
-          vm_size             = "${TF_VM_SIZE}"
+          vm_size              = "${TF_VM_SIZE}"
           admin_username      = "${TF_ADMIN_USERNAME}"
           ssh_public_key_path = "$RUNNER_TEMP/azure-vm.pub"
           EOF
 
-      - name: Get GitHub runner public IP
+      - name: Configure SSH allowed IPs
+        env:
+          ADMIN_SSH_IP: ${{ vars.ADMIN_SSH_IP }}
         shell: bash
         run: |
           set -euo pipefail
 
           RUNNER_IP=$(curl -4 -fsS https://api.ipify.org)
 
-          if [[ ! "$RUNNER_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Failed to obtain a valid IPv4 address."
+          if [ -z "$ADMIN_SSH_IP" ]; then
+            echo "ADMIN_SSH_IP GitHub variable is missing."
             exit 1
           fi
 
-          echo "TF_VAR_ssh_allowed_cidr=${RUNNER_IP}/32" >> "$GITHUB_ENV"
-          echo "Runner IP retrieved successfully."
+          echo "TF_VAR_ssh_allowed_cidr=${RUNNER_IP}/32,${ADMIN_SSH_IP}/32" >> "$GITHUB_ENV"
+
+          echo "Configured SSH access for GitHub runner and administrator."
 
       - name: Check formatting
         run: terraform fmt -check -recursive

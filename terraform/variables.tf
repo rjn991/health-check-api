@@ -39,7 +39,7 @@ variable "ssh_public_key_path" {
 }
 
 variable "ssh_allowed_cidr" {
-  description = "Your public IP address in CIDR format, e.g. 203.0.113.10/32"
+  description = "Comma-separated SSH source CIDRs"
   type        = string
 }
 
