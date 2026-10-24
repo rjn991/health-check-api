@@ -70,3 +70,7 @@ jobs:
 
       - name: Generate Terraform plan
         run: terraform plan -input=false -no-color
+      
+      - name: Apply Terraform changes
+        if: github.event_name == 'workflow_dispatch'
+        run: terraform apply -input=false -auto-approve tfplan
