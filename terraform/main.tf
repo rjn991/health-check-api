@@ -60,7 +60,7 @@ resource "azurerm_network_security_group" "main" {
   # Public HTTP access for the API through port 80.
   security_rule {
     name                       = "Allow-HTTP"
-    priority                   = 110
+    priority                   = 120
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
