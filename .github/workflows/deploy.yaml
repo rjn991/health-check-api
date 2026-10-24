@@ -171,3 +171,39 @@ jobs:
           ansible-playbook \
             -i ansible/inventory.ini \
             ansible/playbook.yaml
+
+      - name: Verify deployed API health
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VM_IP=$(terraform -chdir=terraform output -raw public_ip_address)
+          HEALTH_URL="http://${VM_IP}:8000/health"
+
+          for attempt in $(seq 1 12); do
+            if response=$(curl --silent --show-error --fail \
+              --max-time 5 "$HEALTH_URL" 2>/dev/null); then
+
+              if echo "$response" | python3 -c '
+          import json
+          import sys
+
+          try:
+              data = json.load(sys.stdin)
+              sys.exit(0 if data.get("status") == "healthy" else 1)
+          except (json.JSONDecodeError, AttributeError):
+              sys.exit(1)
+          '; then
+                echo "API health check passed."
+                echo "$response"
+                exit 0
+              fi
+            fi
+
+            echo "Health check attempt $attempt/12 failed. Retrying..."
+            sleep 5
+          done
+
+          echo "API health check failed after deployment."
+          exit 1
