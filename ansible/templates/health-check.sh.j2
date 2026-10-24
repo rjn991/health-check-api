@@ -1,0 +1,33 @@
+#!/bin/bash
+
+HEALTH_URL="http://127.0.0.1:{{ app_port }}/health"
+SERVICE_NAME="health-check-api"
+
+check_health() {
+    response=$(curl --silent --fail --max-time 10 "$HEALTH_URL") || return 1
+
+    echo "$response" | python3 -c '
+import json
+import sys
+
+try:
+    data = json.load(sys.stdin)
+    sys.exit(0 if data.get("status") == "healthy" else 1)
+except (json.JSONDecodeError, AttributeError):
+    sys.exit(1)
+'
+}
+
+if ! check_health; then
+    logger -t health-check-api "Health check failed. Restarting service."
+
+    systemctl restart "$SERVICE_NAME"
+    sleep 5
+
+    if check_health; then
+        logger -t health-check-api "Service recovered successfully."
+    else
+        logger -t health-check-api "Service is still unhealthy after restart."
+        exit 1
+    fi
+fi
