@@ -58,7 +58,7 @@ jobs:
           location            = "${TF_LOCATION}"
           resource_group_name = "${TF_RESOURCE_GROUP_NAME}"
           vm_name             = "${TF_VM_NAME}"
-          vm_size              = "${TF_VM_SIZE}"
+          vm_size             = "${TF_VM_SIZE}"
           admin_username      = "${TF_ADMIN_USERNAME}"
           ssh_public_key_path = "$RUNNER_TEMP/azure-vm.pub"
           EOF
