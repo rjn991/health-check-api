@@ -1,0 +1,15 @@
+[Unit]
+Description=Health Check API
+After=network.target
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_user }}
+WorkingDirectory={{ app_dir }}
+ExecStart={{ app_dir }}/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port {{ app_port }}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
