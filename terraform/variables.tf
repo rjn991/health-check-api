@@ -38,8 +38,13 @@ variable "ssh_public_key_path" {
   type        = string
 }
 
-variable "ssh_allowed_cidr" {
-  description = "Comma-separated SSH source CIDRs"
+variable "github_runner_ip" {
+  description = "GitHub Actions runner public IPv4 CIDR"
+  type        = string
+}
+
+variable "admin_ssh_cidr" {
+  description = "Administrator SSH source IP or CIDR"
   type        = string
 }
 

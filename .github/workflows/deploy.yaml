@@ -65,19 +65,20 @@ jobs:
 
       - name: Configure SSH allowed IPs
         env:
-          ADMIN_SSH_IP: ${{ vars.ADMIN_SSH_IP }}
+          ADMIN_SSH_CIDR: ${{ vars.ADMIN_SSH_CIDR }}
         shell: bash
         run: |
           set -euo pipefail
 
           RUNNER_IP=$(curl -4 -fsS https://api.ipify.org)
 
-          if [ -z "$ADMIN_SSH_IP" ]; then
-            echo "ADMIN_SSH_IP GitHub variable is missing."
+          if [ -z "$ADMIN_SSH_CIDR" ]; then
+            echo "ADMIN_SSH_CIDR GitHub variable is missing."
             exit 1
           fi
 
-          echo "TF_VAR_ssh_allowed_cidr=${RUNNER_IP}/32,${ADMIN_SSH_IP}/32" >> "$GITHUB_ENV"
+          echo "TF_VAR_github_runner_ip=${RUNNER_IP}/32" >> "$GITHUB_ENV"
+          echo "TF_VAR_admin_ssh_cidr=${ADMIN_SSH_CIDR}" >> "$GITHUB_ENV"
 
           echo "Configured SSH access for GitHub runner and administrator."
 
