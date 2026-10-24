@@ -47,7 +47,6 @@ jobs:
           TF_VM_NAME: ${{ vars.TF_VM_NAME }}
           TF_VM_SIZE: ${{ vars.TF_VM_SIZE }}
           TF_ADMIN_USERNAME: ${{ vars.TF_ADMIN_USERNAME }}
-          TF_SSH_ALLOWED_CIDR: ${{ vars.TF_SSH_ALLOWED_CIDR }}
           SSH_PUBLIC_KEY: ${{ vars.AZURE_SSH_PUBLIC_KEY }}
         run: |
           set -euo pipefail
@@ -62,8 +61,22 @@ jobs:
           vm_size             = "${TF_VM_SIZE}"
           admin_username      = "${TF_ADMIN_USERNAME}"
           ssh_public_key_path = "$RUNNER_TEMP/azure-vm.pub"
-          ssh_allowed_cidr    = "${TF_SSH_ALLOWED_CIDR}"
           EOF
+
+      - name: Get GitHub runner public IP
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RUNNER_IP=$(curl -4 -fsS https://api.ipify.org)
+
+          if [[ ! "$RUNNER_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Failed to obtain a valid IPv4 address."
+            exit 1
+          fi
+
+          echo "TF_VAR_ssh_allowed_cidr=${RUNNER_IP}/32" >> "$GITHUB_ENV"
+          echo "Runner IP retrieved successfully."
 
       - name: Check formatting
         run: terraform fmt -check -recursive
@@ -78,7 +91,6 @@ jobs:
         run: terraform plan -input=false -no-color -out="$RUNNER_TEMP/tfplan"
 
       - name: Apply Terraform changes
-        if: github.event_name == 'workflow_dispatch'
         run: terraform apply -input=false -auto-approve "$RUNNER_TEMP/tfplan"
 
       - name: Install Ansible
@@ -146,4 +158,4 @@ jobs:
         run: |
           ansible-playbook \
             -i ansible/inventory.ini \
-            ansible/deploy.yml
+            ansible/playbook.yaml
