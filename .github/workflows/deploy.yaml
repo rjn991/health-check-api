@@ -1,15 +1,13 @@
 name: Terraform and Ansible Deployment
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - Code Validation
+    types:
+      - completed
     branches:
       - main
-    paths:
-      - "terraform/**"
-      - "ansible/**"
-      - "app/**"
-      - "requirements.txt"
-      - ".github/workflows/deploy.yaml"
 
   workflow_dispatch:
 
@@ -19,6 +17,9 @@ permissions:
 jobs:
   deploy:
     name: Terraform and Ansible
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
 
     defaults:
@@ -50,6 +51,11 @@ jobs:
           SSH_PUBLIC_KEY: ${{ vars.AZURE_SSH_PUBLIC_KEY }}
         run: |
           set -euo pipefail
+
+          if [ -z "$SSH_PUBLIC_KEY" ]; then
+            echo "AZURE_SSH_PUBLIC_KEY GitHub variable is missing."
+            exit 1
+          fi
 
           printf '%s\n' "$SSH_PUBLIC_KEY" > "$RUNNER_TEMP/azure-vm.pub"
 
@@ -97,11 +103,12 @@ jobs:
       - name: Apply Terraform changes
         run: terraform apply -input=false -auto-approve "$RUNNER_TEMP/tfplan"
 
-      - name: Install Ansible
+      - name: Install Ansible dependencies
         working-directory: .
         run: |
           sudo apt-get update
-          sudo apt-get install -y ansible
+          sudo apt-get install -y ansible rsync
+          ansible-galaxy collection install ansible.posix
 
       - name: Configure SSH private key
         working-directory: .
@@ -123,25 +130,26 @@ jobs:
           echo "ANSIBLE_PRIVATE_KEY_FILE=$KEY_PATH" >> "$GITHUB_ENV"
 
       - name: Generate Ansible inventory
+        working-directory: .
         env:
           TF_ADMIN_USERNAME: ${{ vars.TF_ADMIN_USERNAME }}
         shell: bash
         run: |
           set -euo pipefail
 
-          VM_IP=$(terraform output -raw public_ip_address)
+          VM_IP=$(terraform -chdir=terraform output -raw public_ip_address)
 
           if [ -z "$VM_IP" ]; then
             echo "Terraform did not return a public IP."
             exit 1
           fi
 
-          printf '[api]\n' > ../ansible/inventory.ini
+          printf '[api]\n' > ansible/inventory.ini
 
           printf 'health-check-api-vm ansible_host=%s ansible_user=%s ansible_ssh_private_key_file=%s\n' \
             "$VM_IP" \
             "$TF_ADMIN_USERNAME" \
-            "$ANSIBLE_PRIVATE_KEY_FILE" >> ../ansible/inventory.ini
+            "$ANSIBLE_PRIVATE_KEY_FILE" >> ansible/inventory.ini
 
           echo "Generated Ansible inventory for the Azure VM."
 
