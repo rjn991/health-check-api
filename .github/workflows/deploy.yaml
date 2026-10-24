@@ -9,7 +9,7 @@ on:
       - "ansible/**"
       - "app/**"
       - "requirements.txt"
-      - ".github/workflows/deployment.yaml"
+      - ".github/workflows/deploy.yaml"
 
   workflow_dispatch:
 
