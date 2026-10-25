@@ -4,8 +4,8 @@ A small FastAPI service deployed on an Azure Linux VM using Terraform, Ansible, 
 
 ## Live Demo
 
-- [API Endpoint](http://20.198.86.220:8000/)
-- [Health Check](http://20.198.86.220:8000/health)
+- [API Endpoint](http://20.207.201.52/)
+- [Health Check](http://20.207.201.52/health)
 
 ## GitHub Actions
 
