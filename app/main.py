@@ -8,7 +8,7 @@ app = FastAPI(title="Platform Status API", version="1.0.0")
 @app.get("/")
 def home():
     return {
-        "message": "Platform Status API is running"
+        "message": "Platform Status API is really running"
     }
 
 
