@@ -10,7 +10,7 @@ def test_root_endpoint():
 
     assert response.status_code == 200
     assert response.json() == {
-        "message": "Platform Status API is really running"
+        "message": "Platform Status API is running"
     }
 
 
